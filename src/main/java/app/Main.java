@@ -1,0 +1,1 @@
+// Launches JavaFX app.
