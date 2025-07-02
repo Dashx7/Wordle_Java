@@ -1,0 +1,12 @@
+
+Highlight correct letters like Wordle (green/yellow/gray logic)
+
+Add basic word validation using your word list
+
+Enable win/loss detection
+
+Clean up or revive the unused files (GameManager, etc.)
+
+Style it nicer (colors, spacing)
+
+Add keyboard input support

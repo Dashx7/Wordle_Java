@@ -1,5 +1,7 @@
+wordle\Main$1.class
 main\java\app\WordLoader.class
 wordle\Main.class
 main\java\app\UIComponents.class
+wordle\WordChecker.class
 main\java\app\GameController.class
-main\java\app\WordChecker.class
+wordle\WordChecker$LetterResult.class

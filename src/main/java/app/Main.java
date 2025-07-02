@@ -1,43 +1,105 @@
-// Launches JavaFX app.
 package wordle;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+
 public class Main extends Application {
 
-    @Override
-    public void start(Stage primaryStage) {
-        primaryStage.setTitle("Wordle Clone");
+    private static final int ROWS = 6;
+    private static final int COLS = 5;
+    private GridPane grid = new GridPane();
+    private int currentRow = 0;
+    private String answer;
 
-        GridPane gameGrid = new GridPane();
-        for (int row = 0; row < 6; row++) {
-            for (int col = 0; col < 5; col++) {
-                Text tile = new Text("_");
-                tile.setStyle("-fx-font-size: 24; -fx-padding: 10;");
-                gameGrid.add(tile, col, row);
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        System.out.println("Debugging start: JavaFX app has launched");
+
+        // Load words
+        List<String> words = loadAnswerList();
+        answer = words.get(new Random().nextInt(words.size())).toUpperCase();
+        System.out.println("Answer (for debugging): " + answer);
+
+        // Build board
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
+                Text cell = new Text("_");
+                cell.setStyle("-fx-font-size: 24; -fx-padding: 10;");
+                grid.add(cell, col, row);
             }
         }
 
-        TextField guessInput = new TextField();
-        guessInput.setPromptText("Enter guess");
-        Button submitButton = new Button("Submit");
+        // User input
+        TextField input = new TextField();
+        input.setPromptText("Enter 5-letter word");
+        Button submit = new Button("Submit");
 
-        VBox inputBox = new VBox(5, guessInput, submitButton);
-        BorderPane root = new BorderPane();
-        root.setCenter(gameGrid);
-        root.setBottom(inputBox);
+        submit.setOnAction(e -> {
+            String guess = input.getText().trim().toUpperCase();
+            if (guess.length() != 5 || currentRow >= ROWS)
+                return;
 
-        Scene scene = new Scene(root, 400, 500);
-        primaryStage.setScene(scene);
+            List<WordChecker.LetterResult> results = WordChecker.checkGuess(guess, answer);
+
+            for (int i = 0; i < COLS; i++) {
+                char letter = guess.charAt(i);
+                WordChecker.LetterResult res = results.get(i);
+
+                String color;
+                switch (res) {
+                    case CORRECT:
+                        color = "#6aaa64";
+                        break; // green
+                    case PRESENT:
+                        color = "#c9b458";
+                        break; // yellow
+                    case ABSENT:
+                        color = "#787c7e";
+                        break; // gray
+                    default:
+                        color = "white";
+                        break;
+                }
+
+                Label cell = new Label(String.valueOf(letter));
+                cell.setStyle(String.format(
+                        "-fx-font-size: 24; -fx-padding: 10; -fx-background-color: %s; -fx-fill: white;", color));
+                grid.add(cell, i, currentRow);
+            }
+
+            currentRow++;
+            input.clear();
+        });
+
+        VBox controls = new VBox(5, input, submit);
+        BorderPane layout = new BorderPane();
+        layout.setCenter(grid);
+        layout.setBottom(controls);
+
+        primaryStage.setTitle("Wordle Clone");
+        primaryStage.setScene(new Scene(layout, 400, 500));
         primaryStage.show();
+    }
+
+    private List<String> loadAnswerList() throws Exception {
+        var stream = getClass().getResourceAsStream("/answerlist.txt");
+        if (stream == null) {
+            throw new RuntimeException("Missing resource: answerlist.txt");
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+            return reader.lines().collect(Collectors.toList());
+        }
     }
 
     public static void main(String[] args) {
